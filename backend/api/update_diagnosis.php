@@ -1,9 +1,7 @@
 <?php
-// backend/api/update_diagnosis.php
-// ─────────────────────────────────────────────────────────────
-// ESQUEMA PostgreSQL:
-//   doctors.id = users.id  (NO existe columna user_id)
-session_start();
+ini_set('display_errors', 0);
+error_reporting(0);
+if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../middleware/auth.php';
@@ -35,25 +33,27 @@ try {
     $user = currentUser();
     $db   = getDB();
 
-    // doctors.id == users.id
-    $stmt = $db->prepare("SELECT id FROM doctors WHERE id = $1");
-    $stmt->execute([$user['id']]);
+    $stmt = $db->prepare("SELECT id FROM doctors WHERE id = :id");
+    $stmt->execute([':id' => $user['id']]);
     $doctor = $stmt->fetch();
-
     if (!$doctor) jsonResponse(['error' => 'Perfil de doctor no encontrado'], 404);
 
-    // Verificar que el paciente esté asignado a este doctor
-    $stmt = $db->prepare("SELECT 1 FROM assigned_patients WHERE doctor_id = $1 AND patient_id = $2");
-    $stmt->execute([$doctor['id'], $patientId]);
-    if (!$stmt->fetch()) {
-        jsonResponse(['error' => 'Este paciente no está asignado a ti.'], 403);
-    }
+    $stmt = $db->prepare("SELECT 1 FROM assigned_patients WHERE doctor_id = :did AND patient_id = :pid");
+    $stmt->execute([':did' => $doctor['id'], ':pid' => $patientId]);
+    if (!$stmt->fetch()) jsonResponse(['error' => 'Este paciente no está asignado a ti.'], 403);
 
     $stmt = $db->prepare("
         INSERT INTO medical_records (patient_id, doctor_id, visit_date, diagnosis, treatment, notes)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES (:patient_id, :doctor_id, :visit_date, :diagnosis, :treatment, :notes)
     ");
-    $stmt->execute([$patientId, $doctor['id'], $visitDate, $diagnosis, $treatment, $notes]);
+    $stmt->execute([
+        ':patient_id' => $patientId,
+        ':doctor_id'  => $doctor['id'],
+        ':visit_date' => $visitDate,
+        ':diagnosis'  => $diagnosis,
+        ':treatment'  => $treatment,
+        ':notes'      => $notes,
+    ]);
 
     jsonResponse(['success' => true, 'message' => 'Diagnóstico registrado correctamente.']);
 } catch (Exception $e) {

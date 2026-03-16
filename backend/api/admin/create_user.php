@@ -1,6 +1,7 @@
 <?php
-// backend/api/admin/create_user.php
-session_start();
+ini_set('display_errors', 0);
+error_reporting(0);
+if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth.php';
@@ -33,8 +34,8 @@ try {
     }
 
     $db   = getDB();
-    $stmt = $db->prepare("INSERT INTO users (username, password, full_name, email, role) VALUES ($1,$2,$3,$4,$5)");
-    $stmt->execute([$username, $password, $fullName, $email, $role]);
+    $stmt = $db->prepare("INSERT INTO users (username, password, full_name, email, role) VALUES (:u,:p,:fn,:em,:r)");
+    $stmt->execute([':u' => $username, ':p' => $password, ':fn' => $fullName, ':em' => $email, ':r' => $role]);
 
     jsonResponse(['success' => true, 'message' => "Usuario '$username' creado."]);
 } catch (Exception $e) {

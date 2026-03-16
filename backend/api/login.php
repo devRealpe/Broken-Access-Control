@@ -1,8 +1,7 @@
 <?php
-// backend/api/login.php
-// ─────────────────────────────────────────────────────────────
-// session_start() DEBE ser lo primero, antes de cualquier output
-session_start();
+ini_set('display_errors', 0);
+error_reporting(0);
+if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../middleware/auth.php';
@@ -30,9 +29,9 @@ try {
     }
 
     $db   = getDB();
-    // PostgreSQL usa $1, $2... como placeholders (NO el ? de MySQL/SQLite)
-    $stmt = $db->prepare("SELECT * FROM users WHERE username = $1");
-    $stmt->execute([$username]);
+    // Placeholder con nombre :username — compatible con PDO nativo PostgreSQL
+    $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
+    $stmt->execute([':username' => $username]);
     $user = $stmt->fetch();
 
     // ⚠️ VULNERABILIDAD INTENCIONAL: contraseña en texto plano

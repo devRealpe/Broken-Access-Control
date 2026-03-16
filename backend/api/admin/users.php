@@ -1,14 +1,9 @@
 <?php
-// backend/api/admin/users.php
-// ─────────────────────────────────────────────────────────────
 // ⚠️⚠️⚠️  VULNERABILIDAD INTENCIONAL — BROKEN ACCESS CONTROL  ⚠️⚠️⚠️
-//
-// Usa requireAuth() en lugar de requireRole('admin').
-// Cualquier usuario AUTENTICADO puede acceder sin importar su rol.
-// OWASP A01:2021 — Broken Access Control
-//
-// FIX (no aplicado a propósito): requireRole('admin');
-session_start();
+// Usa requireAuth() en lugar de requireRole('admin')
+ini_set('display_errors', 0);
+error_reporting(0);
+if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth.php';
@@ -27,18 +22,11 @@ try {
 
     $db = getDB();
 
-    // doctors.id == users.id → LEFT JOIN doctors d ON d.id = u.id
     $users = $db->query("
         SELECT
-            u.id,
-            u.username,
-            u.password,
-            u.full_name,
-            u.email,
-            u.role,
-            u.created_at,
-            CASE WHEN u.role = 'doctor' THEN d.specialty       ELSE NULL END AS specialty,
-            CASE WHEN u.role = 'doctor' THEN d.license_number  ELSE NULL END AS license_number
+            u.id, u.username, u.password, u.full_name, u.email, u.role, u.created_at,
+            CASE WHEN u.role = 'doctor' THEN d.specialty      ELSE NULL END AS specialty,
+            CASE WHEN u.role = 'doctor' THEN d.license_number ELSE NULL END AS license_number
         FROM users u
         LEFT JOIN doctors d ON d.id = u.id
         ORDER BY u.role, u.full_name

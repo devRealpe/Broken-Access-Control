@@ -1,10 +1,7 @@
 <?php
-// backend/api/admin/all_records.php
-// ─────────────────────────────────────────────────────────────
-// ESQUEMA PostgreSQL:
-//   patients.id = users.id  (NO existe columna user_id)
-//   doctors.id  = users.id  (NO existe columna user_id)
-session_start();
+ini_set('display_errors', 0);
+error_reporting(0);
+if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth.php';
@@ -21,16 +18,9 @@ try {
     requireRole('admin');
     $db = getDB();
 
-    // patients.id == users.id → JOIN users up ON up.id = p.id
-    // doctors.id  == users.id → JOIN users ud ON ud.id = d.id
     $records = $db->query("
         SELECT
-            mr.id,
-            mr.visit_date,
-            mr.diagnosis,
-            mr.treatment,
-            mr.notes,
-            mr.created_at,
+            mr.id, mr.visit_date, mr.diagnosis, mr.treatment, mr.notes, mr.created_at,
             up.full_name AS patient_name,
             ud.full_name AS doctor_name,
             d.specialty
