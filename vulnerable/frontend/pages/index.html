@@ -1,0 +1,2131 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSec — Sistema Médico Hospitalario</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ─────────────────────────────────────────────
+   TOKENS & RESET
+───────────────────────────────────────────── */
+      :root {
+        /* Palette — Deep Medical Blue */
+        --ink: #060d1a;
+        --ink2: #0c1828;
+        --ink3: #112035;
+        --ink4: #162844;
+        --surface: #1a3050;
+        --glass: rgba(255, 255, 255, 0.04);
+        --glass2: rgba(255, 255, 255, 0.07);
+        --glassb: rgba(255, 255, 255, 0.09);
+
+        --cyan: #00c2e0;
+        --cyan2: #00a8c6;
+        --cyan-glow: rgba(0, 194, 224, 0.18);
+        --teal: #00ddb3;
+        --teal-dim: rgba(0, 221, 179, 0.14);
+        --sky: #7dd3fc;
+
+        --white: #f0f6ff;
+        --white2: #c2d4ea;
+        --white3: #7a95b5;
+        --white4: #3d5570;
+
+        --danger: #ff6b6b;
+        --danger-dim: rgba(255, 107, 107, 0.13);
+        --warn: #ffc060;
+        --success: #00ddb3;
+
+        --border: rgba(0, 194, 224, 0.12);
+        --border2: rgba(0, 194, 224, 0.22);
+        --border3: rgba(0, 194, 224, 0.36);
+
+        /* Fonts */
+        --serif: "Instrument Serif", Georgia, serif;
+        --sans: "Plus Jakarta Sans", sans-serif;
+        --mono: "JetBrains Mono", monospace;
+
+        --r-sm: 8px;
+        --r-md: 14px;
+        --r-lg: 20px;
+        --r-xl: 28px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        font-size: 16px;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--ink);
+        color: var(--white);
+        font-family: var(--sans);
+        font-size: 0.925rem;
+        line-height: 1.65;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      /* Noise texture overlay */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.6;
+      }
+
+      a {
+        color: var(--cyan);
+        text-decoration: none;
+      }
+
+      /* ─────────────────────────────────────────────
+   UTILITY
+───────────────────────────────────────────── */
+      .hidden {
+        display: none !important;
+      }
+      .flex {
+        display: flex;
+      }
+      .gap-1 {
+        gap: 0.5rem;
+      }
+      .gap-2 {
+        gap: 1rem;
+      }
+      .gap-3 {
+        gap: 1.5rem;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .justify-between {
+        justify-content: space-between;
+      }
+      .w-full {
+        width: 100%;
+      }
+      .text-sm {
+        font-size: 0.82rem;
+      }
+      .text-xs {
+        font-size: 0.72rem;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .font-bold {
+        font-weight: 700;
+      }
+      .mt-1 {
+        margin-top: 0.5rem;
+      }
+      .mt-2 {
+        margin-top: 1rem;
+      }
+      .mt-3 {
+        margin-top: 1.5rem;
+      }
+
+      /* ─────────────────────────────────────────────
+   PAGE SYSTEM
+───────────────────────────────────────────── */
+      .page {
+        display: none;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+      }
+      .page.active {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ─────────────────────────────────────────────
+   ANIMATED BACKGROUND ORBS
+───────────────────────────────────────────── */
+      .bg-orbs {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: orbFloat 18s ease-in-out infinite;
+      }
+      .orb-1 {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 194, 224, 0.12) 0%,
+          transparent 70%
+        );
+        top: -150px;
+        right: -100px;
+        animation-delay: 0s;
+      }
+      .orb-2 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 221, 179, 0.08) 0%,
+          transparent 70%
+        );
+        bottom: 0;
+        left: -100px;
+        animation-delay: -6s;
+      }
+      .orb-3 {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(
+          circle,
+          rgba(125, 211, 252, 0.07) 0%,
+          transparent 70%
+        );
+        top: 50%;
+        left: 40%;
+        animation-delay: -12s;
+      }
+      @keyframes orbFloat {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(30px, -20px) scale(1.05);
+        }
+        66% {
+          transform: translate(-20px, 30px) scale(0.96);
+        }
+      }
+
+      /* ─────────────────────────────────────────────
+   LOGIN PAGE
+───────────────────────────────────────────── */
+      #loginPage {
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        min-height: 100vh;
+      }
+
+      .login-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        max-width: 920px;
+        width: 100%;
+        border-radius: var(--r-xl);
+        overflow: hidden;
+        border: 1px solid var(--border2);
+        box-shadow:
+          0 40px 120px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(0, 194, 224, 0.06);
+        backdrop-filter: blur(2px);
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Left panel — decorative */
+      .login-hero {
+        background: linear-gradient(
+          160deg,
+          var(--ink3) 0%,
+          var(--ink4) 40%,
+          #0a2240 100%
+        );
+        padding: 3.5rem 3rem;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+      .login-hero::after {
+        content: "";
+        position: absolute;
+        bottom: -60px;
+        right: -60px;
+        width: 280px;
+        height: 280px;
+        border: 1px solid rgba(0, 194, 224, 0.15);
+        border-radius: 50%;
+      }
+      .login-hero::before {
+        content: "";
+        position: absolute;
+        bottom: -30px;
+        right: -30px;
+        width: 180px;
+        height: 180px;
+        border: 1px solid rgba(0, 194, 224, 0.1);
+        border-radius: 50%;
+      }
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(0, 194, 224, 0.1);
+        border: 1px solid var(--border2);
+        border-radius: 99px;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.73rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--cyan);
+        width: fit-content;
+        margin-bottom: 2.5rem;
+      }
+      .hero-title {
+        font-family: var(--serif);
+        font-size: 2.6rem;
+        line-height: 1.15;
+        color: var(--white);
+        margin-bottom: 1rem;
+      }
+      .hero-title em {
+        font-style: italic;
+        color: var(--cyan);
+      }
+      .hero-sub {
+        color: var(--white3);
+        font-size: 0.88rem;
+        line-height: 1.7;
+        max-width: 280px;
+      }
+      .hero-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 3rem;
+      }
+      .hero-stat {
+        background: var(--glass2);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: 1rem;
+      }
+      .hero-stat .val {
+        font-family: var(--mono);
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: var(--cyan);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+      }
+      .hero-stat .lbl {
+        font-size: 0.73rem;
+        color: var(--white3);
+      }
+
+      /* Right panel — form */
+      .login-form-panel {
+        background: var(--ink2);
+        padding: 3.5rem 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .login-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2.5rem;
+      }
+      .brand-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, var(--cyan), var(--teal));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 20px rgba(0, 194, 224, 0.3);
+      }
+      .brand-name {
+        font-family: var(--serif);
+        font-size: 1.75rem;
+        color: var(--white);
+      }
+      .brand-name span {
+        color: var(--cyan);
+      }
+      .login-heading {
+        font-family: var(--sans);
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--white);
+        margin-bottom: 0.35rem;
+      }
+      .login-sub {
+        color: var(--white3);
+        font-size: 0.83rem;
+        margin-bottom: 2rem;
+      }
+
+      .field {
+        margin-bottom: 1.1rem;
+      }
+      .field label {
+        display: block;
+        font-size: 0.73rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--white3);
+        margin-bottom: 0.45rem;
+      }
+      .field input {
+        width: 100%;
+        background: var(--ink3);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        padding: 0.75rem 1rem;
+        color: var(--white);
+        font-family: var(--sans);
+        font-size: 0.9rem;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+      .field input:focus {
+        border-color: var(--cyan);
+        background: var(--ink4);
+        box-shadow: 0 0 0 3px rgba(0, 194, 224, 0.12);
+      }
+      .field input::placeholder {
+        color: var(--white4);
+      }
+
+      .btn-login {
+        width: 100%;
+        background: linear-gradient(135deg, var(--cyan2), #0091b0);
+        color: #fff;
+        border: none;
+        border-radius: var(--r-sm);
+        padding: 0.85rem;
+        font-family: var(--sans);
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s;
+        margin-top: 0.5rem;
+        letter-spacing: 0.02em;
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-login::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .btn-login:hover::before {
+        opacity: 1;
+      }
+      .btn-login:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 28px rgba(0, 194, 224, 0.35);
+      }
+      .btn-login:active {
+        transform: translateY(0);
+      }
+
+      #loginError {
+        background: var(--danger-dim);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        color: var(--danger);
+        border-radius: var(--r-sm);
+        padding: 0.7rem 0.9rem;
+        font-size: 0.83rem;
+        margin-bottom: 1rem;
+      }
+
+      .demo-section {
+        margin-top: 1.75rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+      }
+      .demo-title {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--white4);
+        margin-bottom: 0.75rem;
+      }
+      .demo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.7rem;
+        border-radius: var(--r-sm);
+        cursor: pointer;
+        transition: background 0.15s;
+        gap: 0.75rem;
+      }
+      .demo-item:hover {
+        background: var(--glass2);
+      }
+      .demo-item .mono {
+        font-family: var(--mono);
+        font-size: 0.73rem;
+        color: var(--white3);
+      }
+
+      /* Role badges */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.18rem 0.55rem;
+        border-radius: 99px;
+        font-size: 0.67rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+      .badge-admin {
+        background: rgba(192, 132, 252, 0.14);
+        color: #c084fc;
+        border: 1px solid rgba(192, 132, 252, 0.28);
+      }
+      .badge-doctor {
+        background: rgba(0, 221, 179, 0.12);
+        color: var(--teal);
+        border: 1px solid rgba(0, 221, 179, 0.25);
+      }
+      .badge-usuario {
+        background: rgba(0, 194, 224, 0.12);
+        color: var(--cyan);
+        border: 1px solid rgba(0, 194, 224, 0.25);
+      }
+
+      /* ─────────────────────────────────────────────
+   DASHBOARD
+───────────────────────────────────────────── */
+      #dashboardPage {
+        flex-direction: row;
+      }
+
+      /* SIDEBAR */
+      .sidebar {
+        width: 252px;
+        flex-shrink: 0;
+        background: var(--ink2);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        padding: 1.5rem 0.875rem;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        z-index: 10;
+      }
+      .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0 0.6rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 1.25rem;
+      }
+      .sidebar-brand .icon {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, var(--cyan), var(--teal));
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 12px rgba(0, 194, 224, 0.25);
+      }
+      .sidebar-brand .name {
+        font-family: var(--serif);
+        font-size: 1.2rem;
+        color: var(--white);
+      }
+      .sidebar-brand .name span {
+        color: var(--cyan);
+      }
+
+      .sidebar-user {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: 0.875rem 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .sidebar-user::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--cyan), var(--teal));
+      }
+      .sidebar-user .uname {
+        font-weight: 600;
+        font-size: 0.88rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--white);
+        margin-bottom: 0.3rem;
+      }
+      .sidebar-user .uemail {
+        color: var(--white4);
+        font-size: 0.72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .nav-group-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+        color: var(--white4);
+        padding: 0 0.75rem;
+        margin-bottom: 0.4rem;
+        margin-top: 1rem;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.62rem 0.875rem;
+        border-radius: var(--r-sm);
+        cursor: pointer;
+        color: var(--white3);
+        font-size: 0.875rem;
+        transition: all 0.18s;
+        margin-bottom: 0.15rem;
+        border: 1px solid transparent;
+        position: relative;
+      }
+      .nav-item:hover {
+        background: var(--glass2);
+        color: var(--white);
+      }
+      .nav-item.active {
+        background: rgba(0, 194, 224, 0.1);
+        color: var(--cyan);
+        border-color: rgba(0, 194, 224, 0.18);
+      }
+      .nav-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 20%;
+        bottom: 20%;
+        width: 3px;
+        background: var(--cyan);
+        border-radius: 0 3px 3px 0;
+      }
+      .nav-item .nicon {
+        width: 16px;
+        text-align: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+      }
+      .btn-logout {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.62rem;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        color: var(--white3);
+        font-family: var(--sans);
+        font-size: 0.83rem;
+        cursor: pointer;
+        transition: all 0.18s;
+      }
+      .btn-logout:hover {
+        background: var(--danger-dim);
+        border-color: rgba(255, 107, 107, 0.3);
+        color: var(--danger);
+      }
+
+      /* MAIN */
+      .main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2.25rem 2.5rem;
+        position: relative;
+        z-index: 1;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2.25rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-left .page-title {
+        font-family: var(--serif);
+        font-size: 1.9rem;
+        color: var(--white);
+        line-height: 1.2;
+        margin-bottom: 0.2rem;
+      }
+      .topbar-left .page-sub {
+        color: var(--white3);
+        font-size: 0.82rem;
+      }
+      .topbar-time {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--white4);
+        text-align: right;
+      }
+
+      /* PANELS */
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+        animation: panelIn 0.3s ease;
+      }
+      @keyframes panelIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* CARD */
+      .card {
+        background: var(--ink2);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+      }
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+      }
+      .card-title {
+        font-family: var(--sans);
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .card-title .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 6px var(--cyan);
+      }
+
+      /* STATS */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .stat-tile {
+        background: var(--ink2);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1.25rem 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+      .stat-tile:hover {
+        border-color: var(--border2);
+      }
+      .stat-tile::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--tile-color, var(--cyan));
+        border-radius: var(--r-md) var(--r-md) 0 0;
+      }
+      .stat-tile .tval {
+        font-family: var(--mono);
+        font-size: 2rem;
+        font-weight: 500;
+        color: var(--white);
+        line-height: 1;
+        margin-bottom: 0.3rem;
+      }
+      .stat-tile .tlbl {
+        font-size: 0.76rem;
+        color: var(--white3);
+      }
+      .t-cyan {
+        --tile-color: var(--cyan);
+      }
+      .t-teal {
+        --tile-color: var(--teal);
+      }
+      .t-purple {
+        --tile-color: #c084fc;
+      }
+      .t-warn {
+        --tile-color: var(--warn);
+      }
+
+      /* TABLE */
+      .tbl-wrap {
+        overflow-x: auto;
+        margin: 0 -1.5rem;
+        padding: 0 1.5rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.845rem;
+      }
+      thead tr {
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        padding: 0.65rem 0.9rem;
+        text-align: left;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--white4);
+        white-space: nowrap;
+      }
+      td {
+        padding: 0.72rem 0.9rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: middle;
+        color: var(--white2);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr {
+        transition: background 0.12s;
+      }
+      tbody tr:hover td {
+        background: rgba(0, 194, 224, 0.04);
+      }
+
+      /* BUTTONS */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.55rem 1.1rem;
+        border-radius: var(--r-sm);
+        font-family: var(--sans);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.18s;
+        white-space: nowrap;
+      }
+      .btn-cyan {
+        background: rgba(0, 194, 224, 0.14);
+        color: var(--cyan);
+        border: 1px solid rgba(0, 194, 224, 0.28);
+      }
+      .btn-cyan:hover {
+        background: rgba(0, 194, 224, 0.22);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(0, 194, 224, 0.2);
+      }
+
+      .btn-teal {
+        background: rgba(0, 221, 179, 0.12);
+        color: var(--teal);
+        border: 1px solid rgba(0, 221, 179, 0.25);
+      }
+      .btn-teal:hover {
+        background: rgba(0, 221, 179, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .btn-danger {
+        background: var(--danger-dim);
+        color: var(--danger);
+        border: 1px solid rgba(255, 107, 107, 0.28);
+      }
+      .btn-danger:hover {
+        background: rgba(255, 107, 107, 0.22);
+        transform: translateY(-1px);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--white3);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        background: var(--glass2);
+        color: var(--white);
+      }
+
+      .btn-solid {
+        background: linear-gradient(135deg, var(--cyan2), #0091b0);
+        color: white;
+        border: none;
+      }
+      .btn-solid:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(0, 194, 224, 0.3);
+      }
+
+      /* PASSWORD CHIP */
+      .pw-chip {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        background: rgba(255, 107, 107, 0.09);
+        color: #ff8f8f;
+        border: 1px solid rgba(255, 107, 107, 0.18);
+        padding: 0.15rem 0.45rem;
+        border-radius: 5px;
+      }
+
+      /* RECORD CARD */
+      .rec-card {
+        background: var(--ink3);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--cyan);
+        border-radius: var(--r-md);
+        padding: 1.25rem;
+        margin-bottom: 0.875rem;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        position: relative;
+      }
+      .rec-card:hover {
+        border-color: var(--border2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+      .rec-meta {
+        font-family: var(--mono);
+        font-size: 0.73rem;
+        color: var(--white4);
+        margin-bottom: 0.5rem;
+      }
+      .rec-dx {
+        font-weight: 600;
+        font-size: 0.97rem;
+        color: var(--white);
+        margin-bottom: 0.4rem;
+      }
+      .rec-field {
+        font-size: 0.83rem;
+        color: var(--white3);
+        margin-bottom: 0.25rem;
+      }
+      .rec-field strong {
+        color: var(--white2);
+      }
+
+      /* INFO CHIP */
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: var(--glass2);
+        border: 1px solid var(--border);
+        border-radius: 99px;
+        padding: 0.2rem 0.65rem;
+        font-size: 0.75rem;
+        color: var(--white2);
+      }
+
+      /* FORM */
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .fgroup {
+        margin-bottom: 0;
+      }
+      .fgroup label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--white3);
+        margin-bottom: 0.4rem;
+      }
+      .fgroup input,
+      .fgroup select,
+      .fgroup textarea {
+        width: 100%;
+        background: var(--ink3);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        padding: 0.65rem 0.875rem;
+        color: var(--white);
+        font-family: var(--sans);
+        font-size: 0.875rem;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .fgroup input:focus,
+      .fgroup select:focus,
+      .fgroup textarea:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 3px rgba(0, 194, 224, 0.1);
+      }
+      .fgroup select option {
+        background: var(--ink2);
+      }
+      .fgroup textarea {
+        resize: vertical;
+        min-height: 78px;
+      }
+
+      /* CREATE USER FORM */
+      .create-form {
+        background: var(--ink3);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        display: grid;
+        gap: 1rem;
+      }
+
+      /* EMPTY STATE */
+      .empty-state {
+        text-align: center;
+        padding: 3.5rem 1rem;
+        color: var(--white4);
+      }
+      .empty-state .eicon {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.6;
+      }
+      .empty-state p {
+        font-size: 0.875rem;
+      }
+
+      /* LOADER */
+      .loader {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 2.5rem;
+        color: var(--white3);
+        font-size: 0.875rem;
+      }
+      .spin {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--border2);
+        border-top-color: var(--cyan);
+        border-radius: 50%;
+        animation: rotate 0.6s linear infinite;
+      }
+      @keyframes rotate {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* TOAST */
+      #toast {
+        position: fixed;
+        bottom: 1.75rem;
+        right: 1.75rem;
+        padding: 0.875rem 1.25rem;
+        border-radius: var(--r-md);
+        font-size: 0.845rem;
+        font-weight: 500;
+        z-index: 9999;
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-width: 340px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid;
+        backdrop-filter: blur(12px);
+      }
+      #toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      #toast.success {
+        background: rgba(0, 221, 179, 0.13);
+        border-color: rgba(0, 221, 179, 0.3);
+        color: var(--teal);
+      }
+      #toast.error {
+        background: rgba(255, 107, 107, 0.13);
+        border-color: rgba(255, 107, 107, 0.3);
+        color: var(--danger);
+      }
+      #toast.info {
+        background: rgba(0, 194, 224, 0.12);
+        border-color: rgba(0, 194, 224, 0.28);
+        color: var(--cyan);
+      }
+
+      /* MODAL */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(6px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .modal-overlay.open {
+        display: flex;
+        animation: modalFadeIn 0.2s ease;
+      }
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-box {
+        background: var(--ink2);
+        border: 1px solid var(--border2);
+        border-radius: var(--r-xl);
+        padding: 2rem;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+        animation: modalSlideIn 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      @keyframes modalSlideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+      .modal-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--white);
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--white3);
+        font-size: 1.3rem;
+        line-height: 1;
+        transition: color 0.15s;
+      }
+      .modal-close:hover {
+        color: var(--white);
+      }
+      .modal-sub {
+        color: var(--white3);
+        font-size: 0.83rem;
+        margin-bottom: 1.5rem;
+      }
+
+      /* CONFIRM MODAL */
+      .confirm-box {
+        background: var(--ink2);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        border-radius: var(--r-xl);
+        padding: 2rem;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+        animation: modalSlideIn 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      .confirm-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .confirm-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        margin-bottom: 0.5rem;
+      }
+      .confirm-sub {
+        color: var(--white3);
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+
+      /* SCROLLBAR */
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--ink4);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--white4);
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 900px) {
+        .login-wrapper {
+          grid-template-columns: 1fr;
+          max-width: 480px;
+        }
+        .login-hero {
+          display: none;
+        }
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 220px;
+        }
+        .main-content {
+          padding: 1.5rem;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .stats-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      /* DIVIDER */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 1.25rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- BG ORBS -->
+    <div class="bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     LOGIN PAGE
+════════════════════════════════════════════ -->
+    <div id="loginPage" class="page active">
+      <div class="login-wrapper">
+        <!-- Hero -->
+        <div class="login-hero">
+          <div>
+            <div class="hero-badge">🏥 Sistema Hospitalario</div>
+            <div class="hero-title">
+              Gestión médica <em>precisa</em> y segura.
+            </div>
+            <div class="hero-sub">
+              Plataforma centralizada para el control de registros clínicos,
+              pacientes y personal médico.
+            </div>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="val">24/7</div>
+              <div class="lbl">Disponibilidad</div>
+            </div>
+            <div class="hero-stat">
+              <div class="val">3</div>
+              <div class="lbl">Niveles de acceso</div>
+            </div>
+            <div class="hero-stat">
+              <div class="val">100%</div>
+              <div class="lbl">Datos seguros</div>
+            </div>
+            <div class="hero-stat">
+              <div class="val">v2.0</div>
+              <div class="lbl">MediSec</div>
+            </div>
+          </div>
+        </div>
+        <!-- Form -->
+        <div class="login-form-panel">
+          <div class="login-brand">
+            <div class="brand-icon">🏥</div>
+            <div class="brand-name">Medi<span>Sec</span></div>
+          </div>
+          <div class="login-heading">Iniciar sesión</div>
+          <div class="login-sub">
+            Ingrese sus credenciales para acceder al sistema
+          </div>
+
+          <div id="loginError" class="hidden"></div>
+
+          <form id="loginForm">
+            <div class="field">
+              <label>Usuario</label>
+              <input
+                id="loginUsername"
+                type="text"
+                placeholder="Ingrese su usuario"
+                autocomplete="username"
+              />
+            </div>
+            <div class="field">
+              <label>Contraseña</label>
+              <input
+                id="loginPassword"
+                type="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+              />
+            </div>
+            <button type="submit" class="btn-login">
+              Ingresar al sistema →
+            </button>
+          </form>
+
+          <div class="demo-section">
+            <div class="demo-title">Cuentas de prueba</div>
+            <div class="demo-item" onclick="fillDemo('juan_perez', 'pass1234')">
+              <span class="badge badge-usuario">👤 Usuario</span>
+              <span class="mono">juan_perez / pass1234</span>
+            </div>
+            <div
+              class="demo-item"
+              onclick="fillDemo('maria_lopez', 'pass5678')"
+            >
+              <span class="badge badge-usuario">👤 Usuario</span>
+              <span class="mono">maria_lopez / pass5678</span>
+            </div>
+            <div class="demo-item" onclick="fillDemo('dr_garcia', 'doctor456')">
+              <span class="badge badge-doctor">🩺 Doctor</span>
+              <span class="mono">dr_garcia / doctor456</span>
+            </div>
+            <div class="demo-item" onclick="fillDemo('dr_romero', 'doctor789')">
+              <span class="badge badge-doctor">🩺 Doctor</span>
+              <span class="mono">dr_romero / doctor789</span>
+            </div>
+            <div class="demo-item" onclick="fillDemo('admin', 'admin123')">
+              <span class="badge badge-admin">👑 Admin</span>
+              <span class="mono">admin / admin123</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     DASHBOARD PAGE
+════════════════════════════════════════════ -->
+    <div id="dashboardPage" class="page">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="icon">🏥</div>
+          <div class="name">Medi<span>Sec</span></div>
+        </div>
+
+        <div class="sidebar-user">
+          <div class="uname" id="sidebarName">—</div>
+          <div style="margin: 0.3rem 0" id="sidebarRole"></div>
+          <div class="uemail" id="sidebarEmail"></div>
+        </div>
+
+        <!-- Usuario -->
+        <div class="nav-group-label" data-roles="usuario">Mi Cuenta</div>
+        <div class="nav-item" data-panel="panelMyRecords" data-roles="usuario">
+          <span class="nicon">📋</span><span>Mi Historial</span>
+        </div>
+
+        <!-- Doctor -->
+        <div class="nav-group-label" data-roles="doctor">Atención</div>
+        <div class="nav-item" data-panel="panelPatients" data-roles="doctor">
+          <span class="nicon">👥</span><span>Mis Pacientes</span>
+        </div>
+
+        <!-- Admin -->
+        <div class="nav-group-label" data-roles="admin">Administración</div>
+        <div class="nav-item" data-panel="panelAllUsers" data-roles="admin">
+          <span class="nicon">👤</span><span>Usuarios</span>
+        </div>
+        <div class="nav-item" data-panel="panelAllRecords" data-roles="admin">
+          <span class="nicon">📁</span><span>Registros Médicos</span>
+        </div>
+
+        <div class="sidebar-footer">
+          <button id="logoutBtn" class="btn-logout">↩ Cerrar Sesión</button>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main-content">
+        <div class="topbar">
+          <div class="topbar-left">
+            <div class="page-title" id="topbarTitle">Dashboard</div>
+            <div class="page-sub">MediSec · Sistema Médico Hospitalario</div>
+          </div>
+          <div class="topbar-time" id="topbarTime"></div>
+        </div>
+
+        <!-- PANEL: Historial del Usuario -->
+        <div id="panelMyRecords" class="panel">
+          <div id="myRecordsContent">
+            <div class="loader">
+              <div class="spin"></div>
+              Cargando historial...
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: Pacientes del Doctor -->
+        <div id="panelPatients" class="panel">
+          <div id="doctorPatientsContent">
+            <div class="loader">
+              <div class="spin"></div>
+              Cargando pacientes...
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: Admin — Usuarios -->
+        <div id="panelAllUsers" class="panel">
+          <div id="adminUsersContent">
+            <div class="loader">
+              <div class="spin"></div>
+              Cargando usuarios...
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: Admin — Registros -->
+        <div id="panelAllRecords" class="panel">
+          <div id="adminRecordsContent">
+            <div class="loader">
+              <div class="spin"></div>
+              Cargando registros...
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL: Nuevo Diagnóstico
+════════════════════════════════════════════ -->
+    <div id="diagModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-head">
+          <div class="modal-title">✏️ Nuevo Diagnóstico</div>
+          <button class="modal-close" onclick="closeDiagModal()">×</button>
+        </div>
+        <div class="modal-sub">
+          Paciente:
+          <strong id="diagPatientName" style="color: var(--white)">—</strong>
+        </div>
+        <input type="hidden" id="diagPatientId" />
+        <div style="display: grid; gap: 1rem">
+          <div class="fgroup">
+            <label>Fecha de consulta</label><input type="date" id="diagDate" />
+          </div>
+          <div class="fgroup">
+            <label>Diagnóstico *</label
+            ><input
+              id="diagDiagnosis"
+              placeholder="ej: Hipertensión arterial grado I"
+            />
+          </div>
+          <div class="fgroup">
+            <label>Tratamiento *</label
+            ><textarea
+              id="diagTreatment"
+              placeholder="ej: Losartán 50mg cada 24h..."
+            ></textarea>
+          </div>
+          <div class="fgroup">
+            <label>Notas adicionales</label
+            ><textarea
+              id="diagNotes"
+              placeholder="Observaciones de la consulta..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button class="btn btn-ghost" onclick="closeDiagModal()">
+            Cancelar
+          </button>
+          <button class="btn btn-solid" onclick="submitDiagnosis()">
+            💾 Guardar Diagnóstico
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL: Confirmación de Eliminación
+════════════════════════════════════════════ -->
+    <div id="confirmModal" class="modal-overlay">
+      <div class="confirm-box">
+        <div class="confirm-icon" id="confirmIcon">⚠️</div>
+        <div class="confirm-title" id="confirmTitle">
+          ¿Confirmar eliminación?
+        </div>
+        <div class="confirm-sub" id="confirmSub">
+          Esta acción no se puede deshacer.
+        </div>
+        <div class="flex gap-2 mt-3" style="justify-content: center">
+          <button class="btn btn-ghost" onclick="closeConfirm()">
+            Cancelar
+          </button>
+          <button class="btn btn-danger" id="confirmBtn">🗑️ Eliminar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+      /* ─────────────────────────────────────────────
+   CONFIG & STATE
+───────────────────────────────────────────── */
+      const API = "../../backend/api";
+      const State = { user: null };
+
+      /* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+      async function api(path, opts = {}) {
+        const res = await fetch(`${API}/${path}`, {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(opts.headers || {}),
+          },
+          ...opts,
+        });
+        return res.json();
+      }
+
+      function toast(msg, type = "info", ms = 3500) {
+        const el = document.getElementById("toast");
+        el.textContent = msg;
+        el.className = `show ${type}`;
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.classList.remove("show"), ms);
+      }
+
+      function badge(role) {
+        const m = {
+          admin: "👑 Admin",
+          doctor: "🩺 Doctor",
+          usuario: "👤 Paciente",
+        };
+        return `<span class="badge badge-${role}">${m[role] || role}</span>`;
+      }
+
+      function fmtDate(d) {
+        if (!d) return "—";
+        return new Date(d + "T12:00:00").toLocaleDateString("es-CO", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+
+      function updateClock() {
+        const el = document.getElementById("topbarTime");
+        if (!el) return;
+        const now = new Date();
+        el.innerHTML =
+          now.toLocaleDateString("es-CO", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          }) +
+          "<br>" +
+          now.toLocaleTimeString("es-CO", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+      }
+
+      /* ─────────────────────────────────────────────
+   CONFIRM DIALOG
+───────────────────────────────────────────── */
+      function showConfirm(title, sub, icon, onConfirm) {
+        document.getElementById("confirmTitle").textContent = title;
+        document.getElementById("confirmSub").textContent = sub;
+        document.getElementById("confirmIcon").textContent = icon || "⚠️";
+        document.getElementById("confirmModal").classList.add("open");
+        const btn = document.getElementById("confirmBtn");
+        btn.onclick = () => {
+          closeConfirm();
+          onConfirm();
+        };
+      }
+      function closeConfirm() {
+        document.getElementById("confirmModal").classList.remove("open");
+      }
+
+      /* ─────────────────────────────────────────────
+   NAVIGATION
+───────────────────────────────────────────── */
+      function showPage(id) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById(id)?.classList.add("active");
+      }
+
+      function showPanel(id) {
+        document
+          .querySelectorAll(".panel")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById(id)?.classList.add("active");
+        document.querySelectorAll(".nav-item").forEach((n) => {
+          n.classList.toggle("active", n.dataset.panel === id);
+        });
+        const label =
+          document.querySelector(
+            `.nav-item[data-panel="${id}"] span:last-child`,
+          )?.textContent || "";
+        document.getElementById("topbarTitle").textContent = label;
+      }
+
+      /* ─────────────────────────────────────────────
+   LOGIN / LOGOUT
+───────────────────────────────────────────── */
+      async function login(u, p) {
+        const errEl = document.getElementById("loginError");
+        errEl.classList.add("hidden");
+        const data = await api("login.php", {
+          method: "POST",
+          body: JSON.stringify({ username: u, password: p }),
+        });
+        if (!data.success) {
+          errEl.textContent = data.error || "Error de autenticación";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        State.user = data.user;
+        renderDashboard(data.user);
+        showPage("dashboardPage");
+      }
+
+      function fillDemo(u, p) {
+        document.getElementById("loginUsername").value = u;
+        document.getElementById("loginPassword").value = p;
+      }
+
+      async function logout() {
+        await api("logout.php");
+        State.user = null;
+        showPage("loginPage");
+        document.getElementById("loginUsername").value = "";
+        document.getElementById("loginPassword").value = "";
+      }
+
+      /* ─────────────────────────────────────────────
+   RENDER DASHBOARD
+───────────────────────────────────────────── */
+      function renderDashboard(user) {
+        document.getElementById("sidebarName").textContent = user.full_name;
+        document.getElementById("sidebarRole").innerHTML = badge(user.role);
+        document.getElementById("sidebarEmail").textContent = user.email;
+
+        document.querySelectorAll("[data-roles]").forEach((el) => {
+          const roles = el.dataset.roles?.split(",") || [];
+          el.style.display =
+            roles.length === 0 || roles.includes(user.role) ? "" : "none";
+        });
+
+        const def = {
+          usuario: "panelMyRecords",
+          doctor: "panelPatients",
+          admin: "panelAllUsers",
+        };
+        const panel = def[user.role] || "panelMyRecords";
+        showPanel(panel);
+        loadPanel(panel);
+      }
+
+      function loadPanel(id) {
+        const map = {
+          panelMyRecords: loadMyRecords,
+          panelPatients: loadDoctorPatients,
+          panelAllUsers: loadAdminUsers,
+          panelAllRecords: loadAdminRecords,
+        };
+        map[id]?.();
+      }
+
+      /* ─────────────────────────────────────────────
+   PANEL: Mi Historial (Usuario)
+───────────────────────────────────────────── */
+      async function loadMyRecords() {
+        const c = document.getElementById("myRecordsContent");
+        c.innerHTML = `<div class="loader"><div class="spin"></div> Cargando historial...</div>`;
+        const data = await api("my_records.php");
+        if (data.error) {
+          c.innerHTML = `<div class="empty-state"><div class="eicon">🏥</div><p>${data.error}</p></div>`;
+          return;
+        }
+
+        const p = data.patient;
+        const age = p.dob
+          ? Math.floor((Date.now() - new Date(p.dob)) / 31557600000)
+          : "?";
+
+        c.innerHTML = `
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="dot"></span> Mi Información Personal</div>
+    </div>
+    <div class="flex gap-1" style="flex-wrap:wrap">
+      <span class="chip">🩸 ${p.blood_type}</span>
+      <span class="chip">🎂 ${age} años</span>
+      <span class="chip">📞 ${p.phone || "—"}</span>
+      <span class="chip">📍 ${p.address || "—"}</span>
+      <span class="chip">🚨 ${p.emergency_contact || "—"}</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="dot"></span> Historial Clínico</div>
+      <span style="color:var(--white3);font-size:0.78rem">${data.records.length} consulta(s)</span>
+    </div>
+    ${
+      data.records.length === 0
+        ? `<div class="empty-state"><div class="eicon">📭</div><p>No tienes registros médicos aún.</p></div>`
+        : data.records
+            .map(
+              (r) => `
+        <div class="rec-card">
+          <div class="rec-meta">📅 ${fmtDate(r.visit_date)} &nbsp;·&nbsp; Dr. ${r.doctor_name} &nbsp;·&nbsp; ${r.doctor_specialty}</div>
+          <div class="rec-dx">🔴 ${r.diagnosis}</div>
+          <div class="rec-field"><strong>💊 Tratamiento:</strong> ${r.treatment}</div>
+          ${r.notes ? `<div class="rec-field"><strong>📝 Notas:</strong> ${r.notes}</div>` : ""}
+        </div>`,
+            )
+            .join("")
+    }
+  </div>`;
+      }
+
+      /* ─────────────────────────────────────────────
+   PANEL: Pacientes del Doctor
+───────────────────────────────────────────── */
+      async function loadDoctorPatients() {
+        const c = document.getElementById("doctorPatientsContent");
+        c.innerHTML = `<div class="loader"><div class="spin"></div> Cargando pacientes...</div>`;
+        const data = await api("doctor_patients.php");
+        if (data.error) {
+          c.innerHTML = `<div class="empty-state"><div class="eicon">🚫</div><p>${data.error}</p></div>`;
+          return;
+        }
+
+        c.innerHTML = `
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="dot"></span> 🩺 ${data.doctor.name}</div>
+      <div class="flex gap-1">
+        <span class="chip">🏥 ${data.doctor.specialty}</span>
+        <span class="chip">🪪 ${data.doctor.license_number}</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="dot"></span> Pacientes Asignados</div>
+      <span style="color:var(--white3);font-size:0.78rem">${data.patients.length} paciente(s)</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Paciente</th><th>Tipo sangre</th><th>Teléfono</th><th>Último diagnóstico</th><th>Última visita</th><th>Acción</th></tr></thead>
+        <tbody>
+          ${data.patients
+            .map(
+              (p, i) => `
+          <tr>
+            <td style="color:var(--white4);font-family:var(--mono)">${i + 1}</td>
+            <td>
+              <div style="font-weight:600;color:var(--white)">${p.full_name}</div>
+              <div style="color:var(--white4);font-size:0.75rem">${p.email}</div>
+            </td>
+            <td><span class="chip">🩸 ${p.blood_type}</span></td>
+            <td>${p.phone || "—"}</td>
+            <td style="max-width:180px">
+              <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${p.last_diagnosis || `<span style="color:var(--white4)">Sin registros</span>`}
+              </div>
+            </td>
+            <td style="font-family:var(--mono);font-size:0.78rem">${fmtDate(p.last_visit)}</td>
+            <td>
+              <button class="btn btn-teal" onclick="openDiagModal(${p.id},'${p.full_name.replace(/'/g, "\\'")}')">
+                ✏️ Diagnóstico
+              </button>
+            </td>
+          </tr>`,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+      }
+
+      /* ─────────────────────────────────────────────
+   MODAL: Diagnóstico
+───────────────────────────────────────────── */
+      function openDiagModal(pid, name) {
+        document.getElementById("diagPatientId").value = pid;
+        document.getElementById("diagPatientName").textContent = name;
+        document.getElementById("diagModal").classList.add("open");
+      }
+      function closeDiagModal() {
+        document.getElementById("diagModal").classList.remove("open");
+      }
+      async function submitDiagnosis() {
+        const payload = {
+          patient_id: parseInt(document.getElementById("diagPatientId").value),
+          visit_date:
+            document.getElementById("diagDate").value ||
+            new Date().toISOString().slice(0, 10),
+          diagnosis: document.getElementById("diagDiagnosis").value.trim(),
+          treatment: document.getElementById("diagTreatment").value.trim(),
+          notes: document.getElementById("diagNotes").value.trim(),
+        };
+        if (!payload.diagnosis || !payload.treatment) {
+          toast("Diagnóstico y tratamiento son requeridos", "error");
+          return;
+        }
+        const data = await api("update_diagnosis.php", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        if (data.success) {
+          toast("✅ Diagnóstico registrado", "success");
+          closeDiagModal();
+          loadDoctorPatients();
+        } else toast(data.error || "Error al guardar", "error");
+      }
+
+      /* ─────────────────────────────────────────────
+   PANEL: Admin — Usuarios
+───────────────────────────────────────────── */
+      async function loadAdminUsers() {
+        const c = document.getElementById("adminUsersContent");
+        c.innerHTML = `<div class="loader"><div class="spin"></div> Cargando usuarios...</div>`;
+        const data = await api("admin/users.php");
+        if (data.error) {
+          c.innerHTML = `<div class="empty-state"><div class="eicon">🔒</div><p>${data.error}</p></div>`;
+          return;
+        }
+
+        const s = data.stats;
+        c.innerHTML = `
+  <div class="stats-row">
+    <div class="stat-tile t-warn"><div class="tval">${s.total_users}</div><div class="tlbl">Total usuarios</div></div>
+    <div class="stat-tile t-purple"><div class="tval">${s.admins}</div><div class="tlbl">Administradores</div></div>
+    <div class="stat-tile t-teal"><div class="tval">${s.doctors}</div><div class="tlbl">Doctores</div></div>
+    <div class="stat-tile t-cyan"><div class="tval">${s.patients}</div><div class="tlbl">Pacientes</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="dot"></span> Todos los Usuarios</div>
+      <button class="btn btn-teal" onclick="toggleCreateUser()">➕ Nuevo Usuario</button>
+    </div>
+
+    <div id="createUserPanel" class="create-form hidden">
+      <div class="form-grid">
+        <div class="fgroup"><label>Usuario</label><input id="nuUser" placeholder="ej: dr_nuevo" /></div>
+        <div class="fgroup"><label>Contraseña</label><input id="nuPass" type="password" placeholder="••••••••" /></div>
+        <div class="fgroup"><label>Nombre completo</label><input id="nuName" placeholder="Dr. Juan Nuevo" /></div>
+        <div class="fgroup"><label>Email</label><input id="nuEmail" type="email" placeholder="correo@ejemplo.com" /></div>
+        <div class="fgroup"><label>Rol</label>
+          <select id="nuRole">
+            <option value="usuario">👤 Paciente</option>
+            <option value="doctor">🩺 Doctor</option>
+            <option value="admin">👑 Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost" onclick="toggleCreateUser()">Cancelar</button>
+        <button class="btn btn-solid" onclick="createUser()">Crear Usuario</button>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Contraseña</th><th>Creado</th><th>Acción</th></tr></thead>
+        <tbody>
+          ${data.users
+            .map(
+              (u) => `
+          <tr>
+            <td style="font-family:var(--mono);color:var(--white4)">${u.id}</td>
+            <td><span style="font-family:var(--mono);color:var(--cyan)">${u.username}</span></td>
+            <td style="font-weight:500;color:var(--white)">${u.full_name}</td>
+            <td style="color:var(--white3)">${u.email}</td>
+            <td>${badge(u.role)}</td>
+            <td><span class="pw-chip">${u.password}</span></td>
+            <td style="font-family:var(--mono);font-size:0.75rem;color:var(--white4)">${u.created_at?.slice(0, 10) || "—"}</td>
+            <td>
+              <button class="btn btn-danger" onclick="confirmDeleteUser(${u.id},'${u.full_name.replace(/'/g, "\\'")}','${u.username}')">
+                🗑️ Eliminar
+              </button>
+            </td>
+          </tr>`,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+      }
+
+      function toggleCreateUser() {
+        document.getElementById("createUserPanel").classList.toggle("hidden");
+      }
+
+      async function createUser() {
+        const payload = {
+          username: document.getElementById("nuUser").value.trim(),
+          password: document.getElementById("nuPass").value.trim(),
+          full_name: document.getElementById("nuName").value.trim(),
+          email: document.getElementById("nuEmail").value.trim(),
+          role: document.getElementById("nuRole").value,
+        };
+        const data = await api("admin/create_user.php", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        if (data.success) {
+          toast("✅ " + data.message, "success");
+          loadAdminUsers();
+        } else toast(data.error || "Error al crear", "error");
+      }
+
+      function confirmDeleteUser(id, name, username) {
+        showConfirm(
+          `Eliminar usuario`,
+          `¿Estás seguro de eliminar a "${name}" (@${username})? Se eliminarán todos sus datos asociados.`,
+          "🗑️",
+          () => deleteUser(id),
+        );
+      }
+
+      async function deleteUser(id) {
+        const data = await api("admin/delete_user.php", {
+          method: "DELETE",
+          body: JSON.stringify({ user_id: id }),
+        });
+        if (data.success) {
+          toast("✅ Usuario eliminado", "success");
+          loadAdminUsers();
+        } else toast(data.error || "Error al eliminar", "error");
+      }
+
+      /* ─────────────────────────────────────────────
+   PANEL: Admin — Registros Médicos
+───────────────────────────────────────────── */
+      async function loadAdminRecords() {
+        const c = document.getElementById("adminRecordsContent");
+        c.innerHTML = `<div class="loader"><div class="spin"></div> Cargando registros...</div>`;
+        const data = await api("admin/all_records.php");
+        if (data.error) {
+          c.innerHTML = `<div class="empty-state"><div class="eicon">🔒</div><p>${data.error}</p></div>`;
+          return;
+        }
+
+        c.innerHTML = `
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="dot"></span> Todos los Registros Clínicos</div>
+      <span style="color:var(--white3);font-size:0.78rem">${data.total} registro(s)</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Fecha</th><th>Paciente</th><th>Doctor</th><th>Especialidad</th><th>Diagnóstico</th><th>Tratamiento</th><th>Acción</th></tr></thead>
+        <tbody>
+          ${data.records
+            .map(
+              (r) => `
+          <tr>
+            <td style="font-family:var(--mono);color:var(--white4)">${r.id}</td>
+            <td style="font-family:var(--mono);font-size:0.78rem;white-space:nowrap">${fmtDate(r.visit_date)}</td>
+            <td style="font-weight:500;color:var(--white)">${r.patient_name}</td>
+            <td style="color:var(--white3)">${r.doctor_name}</td>
+            <td><span class="chip">${r.specialty}</span></td>
+            <td style="max-width:160px;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.diagnosis}</td>
+            <td style="max-width:160px;font-size:0.82rem;color:var(--white3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.treatment}</td>
+            <td>
+              <button class="btn btn-danger" onclick="confirmDeleteRecord(${r.id},'${r.patient_name.replace(/'/g, "\\'")}','${fmtDate(r.visit_date)}')">
+                🗑️ Eliminar
+              </button>
+            </td>
+          </tr>`,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+      }
+
+      function confirmDeleteRecord(id, patient, date) {
+        showConfirm(
+          `Eliminar registro clínico`,
+          `¿Eliminar el registro del paciente "${patient}" con fecha ${date}? Esta acción es irreversible.`,
+          "📄",
+          () => deleteRecord(id),
+        );
+      }
+
+      async function deleteRecord(id) {
+        const data = await api("admin/delete_record.php", {
+          method: "DELETE",
+          body: JSON.stringify({ record_id: id }),
+        });
+        if (data.success) {
+          toast("✅ Registro eliminado", "success");
+          loadAdminRecords();
+        } else toast(data.error || "Error al eliminar", "error");
+      }
+
+      /* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+      document.addEventListener("DOMContentLoaded", () => {
+        showPage("loginPage");
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        document.getElementById("loginForm").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const u = document.getElementById("loginUsername").value.trim();
+          const p = document.getElementById("loginPassword").value.trim();
+          if (u && p) login(u, p);
+        });
+
+        document.querySelectorAll(".nav-item").forEach((item) => {
+          item.addEventListener("click", () => {
+            const panel = item.dataset.panel;
+            if (!panel) return;
+            showPanel(panel);
+            loadPanel(panel);
+          });
+        });
+
+        document.getElementById("logoutBtn").addEventListener("click", logout);
+
+        document.getElementById("diagModal").addEventListener("click", (e) => {
+          if (e.target.id === "diagModal") closeDiagModal();
+        });
+        document
+          .getElementById("confirmModal")
+          .addEventListener("click", (e) => {
+            if (e.target.id === "confirmModal") closeConfirm();
+          });
+      });
+    </script>
+  </body>
+</html>
