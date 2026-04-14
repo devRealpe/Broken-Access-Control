@@ -4,7 +4,7 @@
 
 define('DB_HOST', 'localhost');
 define('DB_PORT', '5432');
-define('DB_NAME', 'hospital');   // ← cambia si tu BD tiene otro nombre
+define('DB_NAME', 'hospital_2');   // ← cambia si tu BD tiene otro nombre
 define('DB_USER', 'postgres');
 define('DB_PASS', 'admin');      // ← cambia por tu contraseña
 

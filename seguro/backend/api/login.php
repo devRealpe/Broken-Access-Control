@@ -33,7 +33,10 @@ try {
     $stmt->execute([':username' => $username]);
     $user = $stmt->fetch();
 
-    if (!$user || $user['password'] !== $password) {
+    // ✅ CORRECCIÓN: se reemplaza la comparación en texto plano ($user['password'] !== $password)
+    // por password_verify(), que compara de forma segura contra el hash bcrypt almacenado.
+    // Aunque el hash sea filtrado, es computacionalmente inviable invertirlo.
+    if (!$user || !password_verify($password, $user['password'])) {
         jsonResponse(['error' => 'Credenciales incorrectas'], 401);
     }
 

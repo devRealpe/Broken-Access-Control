@@ -15,23 +15,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    // ✅ CORRECCIÓN: se reemplaza requireAuth() por requireRole('admin')
-    // requireAuth() solo verificaba que existiera una sesión activa, sin importar el rol.
-    // requireRole('admin') verifica primero la sesión y luego que el rol sea exactamente 'admin'.
-    // Cualquier otro rol (usuario, doctor) recibirá un 403 Forbidden.
+    // ✅ Control de acceso correcto: solo administradores pueden listar usuarios.
     requireRole('admin');
 
     $db = getDB();
 
-    // ⚠️  VULNERABILIDAD ADICIONAL: la consulta expone la columna `password` en texto plano.
-    // En un sistema real se debería:
-    //   1. Nunca almacenar contraseñas en texto plano (usar password_hash / bcrypt).
-    //   2. No seleccionar ni devolver la columna password en ningún endpoint de listado.
-    // Se deja el campo en la consulta para mantener compatibilidad con la demo,
-    // pero se añade el comentario para que sea visible durante la explicación en clase.
+    // ✅ CORRECCIÓN: se elimina u.password del SELECT.
+    // Un endpoint de listado nunca debe devolver credenciales,
+    // ni siquiera hashes, ya que facilita ataques offline de fuerza bruta.
     $users = $db->query("
         SELECT
-            u.id, u.username, u.password, u.full_name, u.email, u.role, u.created_at,
+            u.id, u.username, u.full_name, u.email, u.role, u.created_at,
             CASE WHEN u.role = 'doctor' THEN d.specialty      ELSE NULL END AS specialty,
             CASE WHEN u.role = 'doctor' THEN d.license_number ELSE NULL END AS license_number
         FROM users u

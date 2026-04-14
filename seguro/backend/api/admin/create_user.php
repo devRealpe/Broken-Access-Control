@@ -33,9 +33,23 @@ try {
         jsonResponse(['error' => 'Rol inválido'], 400);
     }
 
+    // ✅ CORRECCIÓN: nunca almacenar la contraseña en texto plano.
+    // password_hash() genera un hash bcrypt con salt aleatorio incorporado.
+    // PASSWORD_DEFAULT siempre usa el algoritmo más seguro disponible en la versión de PHP.
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
     $db   = getDB();
-    $stmt = $db->prepare("INSERT INTO users (username, password, full_name, email, role) VALUES (:u,:p,:fn,:em,:r)");
-    $stmt->execute([':u' => $username, ':p' => $password, ':fn' => $fullName, ':em' => $email, ':r' => $role]);
+    $stmt = $db->prepare(
+        "INSERT INTO users (username, password, full_name, email, role)
+         VALUES (:u, :p, :fn, :em, :r)"
+    );
+    $stmt->execute([
+        ':u'  => $username,
+        ':p'  => $hashedPassword,   // ← hash, no texto plano
+        ':fn' => $fullName,
+        ':em' => $email,
+        ':r'  => $role,
+    ]);
 
     jsonResponse(['success' => true, 'message' => "Usuario '$username' creado."]);
 } catch (Exception $e) {
