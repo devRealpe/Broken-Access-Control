@@ -91,34 +91,27 @@ async function logout() {
 
 // ── Render Dashboard ───────────────────────────────────────────
 function renderDashboard(user) {
-    // User info en sidebar
     document.getElementById('sidebarName').textContent  = user.full_name;
     document.getElementById('sidebarRole').innerHTML    = roleBadge(user.role);
     document.getElementById('sidebarEmail').textContent = user.email;
 
-    // Mostrar navs según rol
     document.querySelectorAll('.nav-section, .nav-item').forEach(el => {
         const allowedRoles = el.dataset.roles?.split(',') || [];
         if (allowedRoles.length === 0) { el.style.display = ''; return; }
         el.style.display = allowedRoles.includes(user.role) ? '' : 'none';
     });
 
-    // Panel inicial según rol
     const defaults = { usuario: 'panelMyRecords', doctor: 'panelPatients', admin: 'panelAllUsers' };
     showPanel(defaults[user.role] || 'panelMyRecords');
-
-    // Cargar contenido inicial
     loadPanelContent(defaults[user.role]);
 }
 
 function loadPanelContent(panelId) {
     switch (panelId) {
-        case 'panelMyRecords':  loadMyRecords();    break;
+        case 'panelMyRecords':  loadMyRecords();      break;
         case 'panelPatients':   loadDoctorPatients(); break;
-        case 'panelAllUsers':   loadAdminUsers();   break;
-        case 'panelAllRecords': loadAdminRecords(); break;
-        case 'panelNewDiag':    renderNewDiagForm(); break;
-        case 'panelVuln':       /* renderizado estático */ break;
+        case 'panelAllUsers':   loadAdminUsers();     break;
+        case 'panelAllRecords': loadAdminRecords();   break;
     }
 }
 
@@ -203,13 +196,8 @@ async function loadDoctorPatients() {
         <table>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Paciente</th>
-              <th>Sangre</th>
-              <th>Teléfono</th>
-              <th>Último Diagnóstico</th>
-              <th>Última Visita</th>
-              <th>Acción</th>
+              <th>#</th><th>Paciente</th><th>Sangre</th><th>Teléfono</th>
+              <th>Último Diagnóstico</th><th>Última Visita</th><th>Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -241,11 +229,11 @@ async function loadDoctorPatients() {
     </div>`;
 }
 
-// ── Abrir modal nuevo diagnóstico ──────────────────────────────
+// ── Modal nuevo diagnóstico ────────────────────────────────────
 function openDiagModal(patientId, patientName) {
-    document.getElementById('diagPatientId').value   = patientId;
-    document.getElementById('diagPatientName').textContent = patientName;
-    document.getElementById('diagModal').style.display = 'flex';
+    document.getElementById('diagPatientId').value          = patientId;
+    document.getElementById('diagPatientName').textContent  = patientName;
+    document.getElementById('diagModal').style.display      = 'flex';
 }
 function closeDiagModal() {
     document.getElementById('diagModal').style.display = 'none';
@@ -271,7 +259,7 @@ async function submitDiagnosis() {
     }
 }
 
-// ── PANEL: Admin — todos los usuarios (requiere admin) ──────────
+// ── PANEL: Admin — todos los usuarios ──────────────────────────
 async function loadAdminUsers() {
     const container = document.getElementById('adminUsersContent');
     container.innerHTML = '<div class="flex items-center gap-2" style="padding:2rem;color:var(--text2)"><div class="spinner"></div> Cargando usuarios...</div>';
@@ -322,7 +310,7 @@ async function loadAdminUsers() {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Contraseña ⚠️</th><th>Creado</th></tr>
+            <tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Contraseña</th><th>Creado</th></tr>
           </thead>
           <tbody>
             ${data.users.map((u, i) => `
@@ -402,27 +390,10 @@ async function loadAdminRecords() {
     </div>`;
 }
 
-// ── PANEL: Vulnerabilidad Demo ─────────────────────────────────
-async function runExploit() {
-    const resultEl = document.getElementById('vulnResult');
-    const btn      = document.getElementById('exploitBtn');
-    btn.disabled   = true;
-    btn.textContent = '⏳ Ejecutando exploit...';
-
-    // Llamada directa a la API "de admin" desde un usuario normal
-    const data = await api('admin/users.php');
-    resultEl.classList.remove('hidden');
-    resultEl.textContent = JSON.stringify(data, null, 2);
-    btn.disabled   = false;
-    btn.textContent = '🔓 Ejecutar exploit de nuevo';
-    toast('🚨 Datos de admin accedidos como usuario normal!', 'error', 6000);
-}
-
 // ── Init ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     showPage('loginPage');
 
-    // Login form
     document.getElementById('loginForm').addEventListener('submit', e => {
         e.preventDefault();
         const u = document.getElementById('loginUsername').value.trim();
@@ -430,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (u && p) login(u, p);
     });
 
-    // Nav items
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const panel = item.dataset.panel;
@@ -440,10 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Logout
     document.getElementById('logoutBtn').addEventListener('click', logout);
 
-    // Modal backdrop
     document.getElementById('diagModal').addEventListener('click', e => {
         if (e.target === document.getElementById('diagModal')) closeDiagModal();
     });

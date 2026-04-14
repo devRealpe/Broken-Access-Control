@@ -18,7 +18,6 @@ function currentRole(): ?string
     return $_SESSION['user']['role'] ?? null;
 }
 
-// ⚠️ VULNERABLE — solo verifica sesión, NO el rol
 function requireAuth(): void
 {
     if (!isLoggedIn()) {
@@ -26,7 +25,6 @@ function requireAuth(): void
     }
 }
 
-// ✅ SEGURA — verifica sesión Y rol
 function requireRole(string ...$roles): void
 {
     requireAuth();

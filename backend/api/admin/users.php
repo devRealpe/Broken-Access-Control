@@ -1,6 +1,4 @@
 <?php
-// ⚠️⚠️⚠️  VULNERABILIDAD INTENCIONAL — BROKEN ACCESS CONTROL  ⚠️⚠️⚠️
-// Usa requireAuth() en lugar de requireRole('admin')
 ini_set('display_errors', 0);
 error_reporting(0);
 if (session_status() === PHP_SESSION_NONE) session_start();
@@ -17,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    // ⚠️ SOLO verifica autenticación — NO verifica que sea administrador
     requireAuth();
 
     $db = getDB();
@@ -42,10 +39,9 @@ try {
     ")->fetch();
 
     jsonResponse([
-        'vulnerability' => '⚠️ BROKEN ACCESS CONTROL: Este endpoint solo verifica autenticación, NO el rol.',
-        'accessed_as'   => currentUser(),
-        'stats'         => $stats,
-        'users'         => $users,
+        'accessed_as' => currentUser(),
+        'stats'       => $stats,
+        'users'       => $users,
     ]);
 } catch (Exception $e) {
     jsonResponse(['error' => 'Error del servidor: ' . $e->getMessage()], 500);

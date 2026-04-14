@@ -29,12 +29,10 @@ try {
     }
 
     $db   = getDB();
-    // Placeholder con nombre :username — compatible con PDO nativo PostgreSQL
     $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
     $stmt->execute([':username' => $username]);
     $user = $stmt->fetch();
 
-    // ⚠️ VULNERABILIDAD INTENCIONAL: contraseña en texto plano
     if (!$user || $user['password'] !== $password) {
         jsonResponse(['error' => 'Credenciales incorrectas'], 401);
     }
